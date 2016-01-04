@@ -58,10 +58,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CrawlerItem.cs" />
+    <Compile Include="DateUtils.cs" />
     <Compile Include="DocumentWithLinks.cs" />
+    <Compile Include="HandleData.cs" />
     <Compile Include="IWebContentParser.cs" />
     <Compile Include="PageResult.cs" />
-    <Compile Include="ParseResponseContent.cs" />
+    <Compile Include="ResponseContentParser.cs" />
     <Compile Include="TestParser.cs" />
     <Compile Include="UrlMatchRule.cs" />
     <Compile Include="WebDownloader.cs" />

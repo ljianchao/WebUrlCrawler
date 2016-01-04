@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using log4net;
+using System;
 using System.Net;
-using System.IO;
+using System.Text;
 using System.Threading;
-using System.Text.RegularExpressions;
 
 namespace Utils
 {
@@ -15,84 +12,24 @@ namespace Utils
     public class WebDownloader
     {
         /// <summary>
+        /// 创建日志对象
+        /// </summary>
+        private readonly ILog logInfo = LogManager.GetLogger(typeof(WebDownloader));
+
+        /// <summary>
         /// 待数量的url数量
         /// </summary>
         private int handingUrlCount = 0;
 
         private int requestTimeSpan;
         private int articleCategoryId;
-        /// <summary>
-        /// 请求队列
-        /// </summary>
-        private readonly Queue<CrawlerItem> urlQueue = new Queue<CrawlerItem>();
+
 
         public WebDownloader(int requestTimeSpan, int articleCategoryId)
         {
             this.articleCategoryId = articleCategoryId;
             this.requestTimeSpan = requestTimeSpan;
-            this.handingUrlCount = 0;
         }
-
-        public void SetHandingUrlCount()
-        {
-            this.handingUrlCount = this.urlQueue.Count;
-        }
-
-        public int GetHandingUrlCount()
-        {
-            return this.handingUrlCount;
-        }
-
-        /// <summary>
-        /// 发起url请求，并获取返回信息
-        /// </summary>
-        /// <param name="url"></param>
-        /// <param name="encoding"></param>
-        /// <param name="strRefer"></param>
-        /// <returns></returns>
-        //public string GetPageByHttpWebRequest(string url, Encoding encoding, string referer)
-        //{
-
-        //    string result = null;
-
-        //    WebResponse response = null;
-        //    StreamReader reader = null;
-
-        //    try
-        //    {
-        //        HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
-        //        request.UserAgent = "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; .NET CLR 2.0.50727)";
-        //        request.Accept = "image/gif, image/x-xbitmap, image/jpeg, image/pjpeg, application/x-shockwave-flash, application/vnd.ms-excel, application/vnd.ms-powerpoint, application/msword, */*";
-
-        //        if (!string.IsNullOrEmpty(referer))
-        //        {
-        //            Uri u = new Uri(referer);
-        //            request.Referer = u.Host;
-        //        }
-        //        else
-        //        {
-        //            request.Referer = referer;
-        //        }
-        //        request.Method = "GET";
-        //        response = request.GetResponse();
-        //        reader = new StreamReader(response.GetResponseStream(), encoding);
-        //        result = reader.ReadToEnd();
-
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        result = "";
-        //    }
-        //    finally
-        //    {
-        //        if (reader != null)
-        //            reader.Close();
-        //        if (response != null)
-        //            response.Close();
-
-        //    }
-        //    return result;
-        //}
 
         /// <summary>
         /// 异步下载数据
@@ -123,11 +60,12 @@ namespace Utils
 
                 if (!string.IsNullOrEmpty(strContent))
                 {
-                    ParseResponseContent.responseContentQueue.Enqueue(strContent);
+                    HandleData.responseContentQueue.Enqueue(strContent);
                 }
             }
 
-            int count = Interlocked.Decrement(ref handingUrlCount);
+            Interlocked.Increment(ref handingUrlCount);
+            logInfo.InfoFormat("[downloader]已下载url数量：{0}", handingUrlCount);
         }
 
         /// <summary>
@@ -142,7 +80,9 @@ namespace Utils
             cI.requstUrl = strUrl;
             cI.referer = strUrl;
 
-            urlQueue.Enqueue(cI);
+            HandleData.handingUrlQueue.Enqueue(cI);
+            //增加数量
+            //int count = Interlocked.Increment(ref handingUrlCount);
         }
 
         /// <summary>
@@ -150,7 +90,8 @@ namespace Utils
         /// </summary>
         public void ClearQueue()
         {
-            urlQueue.Clear();
+            HandleData.handingUrlQueue.Clear();
+            //this.handingUrlCount = 0;
         }
 
         /// <summary>
@@ -160,10 +101,16 @@ namespace Utils
         /// <returns></returns>
         public void ProcessQueue(Encoding encoding)
         {
+            DateTime startTime = DateTime.Now;
+            logInfo.InfoFormat("[downloader]开始处理请求时间：{0}，总共需要处理请求的数量为：{1}",
+                startTime, HandleData.handingUrlQueue.Count);
+            this.handingUrlCount = 0;
+
             CrawlerItem cI = null;
-            while (urlQueue.Count > 0)
+            while (HandleData.handingUrlQueue.Count > 0)
             {
-                cI = urlQueue.Dequeue();
+                
+                cI = HandleData.handingUrlQueue.Dequeue();
 
                 # region 同步下载
                 //cI = urlQueue.Dequeue();
@@ -186,6 +133,10 @@ namespace Utils
                 //请求一次，进行时间暂停
                 Thread.Sleep(this.requestTimeSpan);
             }
+
+            DateTime endTime = DateTime.Now;
+            logInfo.InfoFormat("[downloader]结束处理请求时间：{0}, 总共耗时：{1}",
+                endTime, DateUtils.DateDiffForMillisecond(startTime, endTime));
         }
     }
 }

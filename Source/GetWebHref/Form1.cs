@@ -27,7 +27,7 @@ namespace GetWebHref
 
         private WebDownloader downloader = null;
 
-        private ParseResponseContent parseResponseContent = null;
+        private ResponseContentParser parseResponseContent = null;
 
         public Form1()
         {
@@ -57,13 +57,17 @@ namespace GetWebHref
         //开始下载
         private void btnGet_Click(object sender, EventArgs e)
         {
-            //this.btnGet.Enabled = false;
+            this.btnGet.Enabled = false;
             this.rtbContent.Text = "";
-            //this.parseResponseContent = new ParseResponseContent(
-            //    Convert.ToInt32(this.cobArticleCategory.SelectedValue), new TestParser());
+
+            //初始化url
+            GatherInitUrls();
+            //初始化解析器
+            this.parseResponseContent = new ResponseContentParser(
+                Convert.ToInt32(this.cobArticleCategory.SelectedValue), HandleData.handingUrlQueue.Count, new TestParser());
 
             this.worker.RunWorkerAsync();
-            //this.parseWorker.RunWorkerAsync();
+            this.parseWorker.RunWorkerAsync();
         }
 
         /// <summary>
@@ -122,9 +126,6 @@ namespace GetWebHref
                     preUrl = strUrl;
                 }
             }
-
-            //设置url总数量
-            downloader.SetHandingUrlCount();
         }
 
         /// <summary>
@@ -134,15 +135,6 @@ namespace GetWebHref
         /// <param name="e"></param>
         void worker_DoWork(object sender, DoWorkEventArgs e)
         {
-            //初始化url
-            GatherInitUrls();
-
-            //初始化解析器
-            this.parseResponseContent = new ParseResponseContent(
-                Convert.ToInt32(this.cobArticleCategory.SelectedValue), new TestParser());
-            
-            this.parseWorker.RunWorkerAsync();
-
             //进行数据请求
             downloader.ProcessQueue(Encoding.UTF8);
         }
