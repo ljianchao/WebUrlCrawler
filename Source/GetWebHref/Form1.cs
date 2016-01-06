@@ -122,9 +122,10 @@ namespace GetWebHref
                 }
                 else
                 {
-                    downloader.AddUrlQueue(strUrl, preUrl);
-                    preUrl = strUrl;
+                    downloader.AddUrlQueue(strUrl, preUrl);                    
                 }
+
+                preUrl = strUrl;
             }
         }
 

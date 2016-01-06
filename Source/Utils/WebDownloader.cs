@@ -78,7 +78,7 @@ namespace Utils
         {
             CrawlerItem cI = new CrawlerItem();
             cI.requstUrl = strUrl;
-            cI.referer = strUrl;
+            cI.referer = refer;
 
             HandleData.handingUrlQueue.Enqueue(cI);
             //增加数量
